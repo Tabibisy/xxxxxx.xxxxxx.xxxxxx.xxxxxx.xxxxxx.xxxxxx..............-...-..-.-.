@@ -2,11 +2,14 @@
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>لوحة الإدارة - توليد مفاتيح طبيبي</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap');
+
+    /* box-sizing عام للتحكم في العرض */
+    *, *::before, *::after { box-sizing: border-box; }
 
     /* CSS Variables للـThemes (مشابه لـ dashboard.html) */
     :root {
@@ -65,9 +68,12 @@
       color: #fff;
       padding: 15px 20px;
       display: flex;
+      flex-direction: column; /* افتراضي column للهواتف */
       align-items: center;
-      justify-content: space-between;
+      justify-content: center;
+      gap: 10px;
       box-shadow: 0 2px 8px var(--shadow-light);
+      text-align: center;
     }
 
     header h1 {
@@ -76,6 +82,11 @@
       display: flex;
       align-items: center;
       gap: 8px;
+    }
+
+    header small {
+      font-size: 13px;
+      margin-top: 2px;
     }
 
     /* زر الثيم */
@@ -91,6 +102,9 @@
       display: flex;
       align-items: center;
       gap: 5px;
+      width: 100%;
+      max-width: 200px;
+      justify-content: center;
     }
 
     #themeToggle:hover { background: var(--secondary-button-hover); }
@@ -98,7 +112,8 @@
     main {
       flex: 1;
       padding: 20px;
-      max-width: 800px;
+      width: 100%;
+      max-width: 100%; /* تحسين: ليس 800px على هواتف */
       margin: 0 auto;
     }
 
@@ -113,15 +128,24 @@
 
     .card h2 { margin-top: 0; color: var(--primary-blue); }
 
+    /* Form: stacked labels/input على هواتف */
+    .card label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+      color: var(--text-color);
+    }
+
     .card input, .card select {
       width: 100%;
       padding: 12px;
       border: 1px solid var(--border-color);
       border-radius: 8px;
-      margin: 10px 0;
+      margin: 5px 0 15px 0; /* تحسين: مسافة أقل */
       font-family: inherit;
       background: var(--card-bg);
       color: var(--text-color);
+      font-size: 16px; /* للهواتف: أكبر لللمس */
     }
 
     .card input:focus, .card select:focus { outline: none; border-color: var(--primary-blue); }
@@ -145,6 +169,9 @@
 
     .btn-success { background: var(--success-green); color: #fff; }
     .btn-success:hover { background: #388e3c; }
+
+    .btn-clear { background: var(--secondary-button-bg); color: var(--text-color); width: auto; padding: 8px 16px; margin-left: 10px; }
+    .btn-clear:hover { background: var(--secondary-button-hover); }
 
     /* زر النسخ في الجدول */
     .copy-btn {
@@ -172,12 +199,12 @@
     .status-success { background: rgba(76, 175, 80, 0.1); color: var(--success-green); border: 1px solid var(--success-green); }
     .status-error { background: rgba(244, 67, 54, 0.1); color: var(--error-red); border: 1px solid var(--error-red); }
 
-    /* إحصائيات */
+    /* إحصائيات: عمود واحد على هواتف */
     .stats-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      gap: 15px;
-      margin: 20px 0;
+      grid-template-columns: 1fr; /* افتراضي 1fr للهواتف */
+      gap: 10px;
+      margin: 15px 0;
     }
 
     .stat-card {
@@ -191,29 +218,131 @@
     .stat-number { font-size: 24px; font-weight: bold; color: var(--primary-blue); }
     .stat-label { font-size: 14px; color: var(--secondary-text); }
 
-    /* جدول المفاتيح */
-    table { width: 100%; border-collapse: collapse; margin: 20px 0; }
-    th, td { padding: 10px; text-align: right; border-bottom: 1px solid var(--border-color); }
-    th { background: var(--secondary-button-bg); color: var(--text-color); }
+    /* شريط الفلتر: flex-wrap مع stack على هواتف */
+    #filterSection {
+      display: flex;
+      flex-direction: column; /* افتراضي column للهواتف */
+      gap: 10px;
+      margin: 15px 0;
+      padding: 10px;
+      background: var(--secondary-button-bg);
+      border-radius: 8px;
+      align-items: stretch;
+    }
+
+    #filterSearch { width: 100%; }
+    #filterSection input, #filterSection select {
+      flex: none;
+      width: 100%;
+      padding: 10px;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      background: var(--card-bg);
+      color: var(--text-color);
+      font-size: 16px;
+    }
+
+    #filterResults { 
+      margin-top: 5px; 
+      font-size: 12px; 
+      color: var(--secondary-text); 
+      text-align: center; 
+    }
+
+    #clearFilters { 
+      align-self: center; 
+      margin-top: 10px; 
+      width: auto; 
+    }
+
+    #noResults { text-align: center; padding: 20px; color: var(--secondary-text); font-style: italic; }
+
+    /* جدول: horizontal scroll + تقليل عرض */
+    #keysContainer {
+      max-height: 400px;
+      overflow-y: auto;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      margin: 10px 0;
+      overflow-x: auto; /* تحسين: scroll أفقي للجدول على هواتف */
+    }
+
+    table { width: 100%; border-collapse: collapse; min-width: 600px; /* min-width للتمرير الأفقي */ }
+    th, td { 
+      padding: 10px; 
+      text-align: right; 
+      border-bottom: 1px solid var(--border-color); 
+      min-width: 70px; /* تحسين: أضيق للهواتف */
+      white-space: nowrap; /* منع كسر النصوص الطويلة مثل المفتاح */
+    }
+    th { background: var(--secondary-button-bg); color: var(--text-color); position: sticky; top: 0; z-index: 1; }
     .expired { color: var(--error-red); }
     .activated { color: var(--success-green); }
+
+    /* Generated Keys textarea */
+    #generatedKeys textarea {
+      width: 100%; 
+      height: 150px; 
+      padding: 10px; 
+      border: 1px solid var(--border-color); 
+      border-radius: 8px; 
+      font-family: monospace; 
+      direction: ltr; 
+      text-align: left;
+      resize: vertical; /* السماح بتعديل الارتفاع */
+    }
 
     /* Loading */
     .loading { display: inline-block; width: 20px; height: 20px; border: 3px solid var(--border-color); border-radius: 50%; border-top-color: var(--primary-blue); animation: spin 1s infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* Responsive */
-    @media (max-width: 768px) { 
-      main { padding: 10px; } 
-      table { font-size: 12px; }
-      header { flex-direction: column; gap: 10px; }
-      #themeToggle { width: 100%; justify-content: center; }
+    /* Responsive Media Queries (محسنة للهواتف) */
+    @media (max-width: 480px) { 
+      header { padding: 10px; font-size: 14px; }
+      header h1 { font-size: 20px; gap: 5px; }
+      main { padding: 5px; }
+      .card { padding: 15px; margin: 10px 0; }
+      .card input, .card select { padding: 10px; font-size: 16px; margin: 5px 0; }
+      .btn { padding: 12px; font-size: 16px; }
+      .stats-grid { gap: 8px; }
+      .stat-number { font-size: 20px; }
+      .stat-label { font-size: 12px; }
+      #keysContainer { max-height: 300px; }
+      table th, table td { padding: 6px; font-size: 11px; min-width: 60px; }
+      #generatedKeys textarea { height: 100px; font-size: 12px; }
+      #filterSection { padding: 8px; gap: 8px; }
+      #filterSection input, #filterSection select { padding: 10px; }
+      .btn-clear { width: 100%; margin-top: 5px; }
+      #filterResults { font-size: 11px; }
+      .copy-btn { padding: 4px 8px; font-size: 10px; }
+    }
+
+    @media (min-width: 481px) and (max-width: 768px) { 
+      header { flex-direction: row; justify-content: space-between; padding: 12px 15px; }
+      #themeToggle { width: auto; max-width: none; }
+      main { padding: 10px; }
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      #filterSection { flex-direction: row; flex-wrap: wrap; }
+      #filterSearch { flex: 2; min-width: 150px; }
+      #filterSection select { min-width: 120px; }
+      #keysContainer { max-height: 350px; }
+      table th, table td { padding: 8px; font-size: 12px; min-width: 80px; }
+    }
+
+    @media (min-width: 769px) { 
+      header { flex-direction: row; justify-content: space-between; }
+      main { max-width: 800px; padding: 20px; }
+      .stats-grid { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+      #filterSection { flex-direction: row; align-items: center; }
+      table th, table td { min-width: 100px; }
     }
 
     /* Dark Mode تحسينات */
     [data-theme="dark"] input, [data-theme="dark"] select { background: var(--card-bg); color: var(--text-color); border-color: var(--border-color); }
     [data-theme="dark"] table th { background: var(--secondary-button-bg); }
     [data-theme="dark"] .copy-btn { background: var(--success-green); }
+    [data-theme="dark"] #keysContainer { border-color: var(--border-color); }
+    [data-theme="dark"] #filterSection { background: var(--secondary-button-bg); }
   </style>
 </head>
 <body data-theme="light">
@@ -261,36 +390,61 @@
         <!-- سيتم ملؤها ديناميكيًا -->
       </div>
       <div class="loading" id="statsLoading"></div>
-      <table id="keysTable">
-        <thead>
-          <tr><th>المفتاح</th><th>نوع</th><th>أجهزة حالية/الحد الأقصى</th><th>تاريخ التوليد</th><th>تاريخ التفعيل</th><th>انتهاء</th><th>حالة</th><th>إجراءات</th></tr>
-        </thead>
-        <tbody></tbody>
-      </table>
+
+      <!-- شريط الفلتر (مع تحسين responsive) -->
+      <div id="filterSection">
+        <input type="text" id="filterSearch" placeholder="ابحث بالمفتاح (مثل TABIBI-ABCD)..." style="direction: ltr;">
+        <select id="filterStatus">
+          <option value="">جميع الحالات</option>
+          <option value="inactive">غير مفعل</option>
+          <option value="active">مفعل</option>
+          <option value="expired">منتهي</option>
+        </select>
+        <select id="filterType">
+          <option value="">جميع الأنواع</option>
+          <option value="minute">دقيقة (للاختبار)</option>
+          <option value="month">شهر واحد</option>
+          <option value="2months">شهرين</option>
+          <option value="year">سنة واحدة</option>
+          <option value="2years">سنتين</option>
+        </select>
+        <button class="btn-clear" id="clearFilters"><i class="fas fa-times"></i> مسح</button>
+        <div id="filterResults"></div>
+      </div>
+
+      <div id="keysContainer">
+        <table id="keysTable">
+          <thead>
+            <tr><th>المفتاح</th><th>نوع</th><th>أجهزة حالية/الحد الأقصى</th><th>تاريخ التوليد</th><th>تاريخ التفعيل</th><th>انتهاء</th><th>حالة</th><th>إجراءات</th></tr>
+          </thead>
+          <tbody id="keysTableBody"></tbody>
+        </table>
+        <div id="noResults" style="display: none;">لا توجد نتائج مطابقة</div>
+      </div>
     </div>
   </main>
 
-  <footer style="text-align: center; padding: 15px; background: var(--primary-blue); color: #fff;">© جميع الحقوق محفوظة لـ Kasp-ai</footer>
+  <footer style="text-align: center; padding: 15px; background: var(--primary-blue); color: #fff; font-size: 14px;">© جميع الحقوق محفوظة لـ Kasp-ai</footer>
 
-  <!-- Firebase SDK -->
+  <!-- Firebase SDK (تصحيح: استخدم config الأصلي الذي عمل سابقًا) -->
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
     import { getDatabase, ref, get, set, update } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
 
-    const firebaseConfig = {
-  apiKey: "AIzaSyAVmar5Wz9bECnRUSu7XwUNKnnqG3b6Wwc",
-  authDomain: "subscription-key-tsbibisy.firebaseapp.com",
-  databaseURL: "https://subscription-key-tsbibisy-default-rtdb.firebaseio.com",
-  projectId: "subscription-key-tsbibisy",
-  storageBucket: "subscription-key-tsbibisy.firebasestorage.app",
-  messagingSenderId: "870064790159",
-  appId: "1:870064790159:web:03da3ce667350dcc3a6efa"
-};
-
+    const config = {
+      apiKey: "AIzaSyCx1or21FNaXKzcMcoVTtjvoGVtHSbBdy0",
+      authDomain: "tabibisy-subkey.firebaseapp.com",
+      databaseURL: "https://tabibisy-subkey-default-rtdb.firebaseio.com",
+      projectId: "tabibisy-subkey",
+      storageBucket: "tabibisy-subkey.firebasestorage.app",
+      messagingSenderId: "1037739463574",
+      appId: "1:1037739463574:web:13dba634bd0738304ec3b7"
+    };
 
     const app = initializeApp(config);
     const db = getDatabase(app);
 
+    // باقي JS كما في الإصدار السابق (فلتر، updateStats مع عرض الجميع، etc.)
     // عناصر DOM
     const generateForm = document.getElementById('generateForm');
     const numKeysInput = document.getElementById('numKeys');
@@ -302,9 +456,20 @@
     const keysTextarea = generatedKeysDiv.querySelector('textarea');
     const statsGrid = document.getElementById('statsGrid');
     const statsLoading = document.getElementById('statsLoading');
-    const keysTableBody = document.querySelector('#keysTable tbody');
+    const keysTableBody = document.getElementById('keysTableBody');
+    const noResultsDiv = document.getElementById('noResults');
 
-    // توليد مفتاح: TABIBI- + 14 حرف عشوائي مجزأ بـ "-" (4-4-4-2)
+    // فلاتر
+    const filterSearch = document.getElementById('filterSearch');
+    const filterStatus = document.getElementById('filterStatus');
+    const filterType = document.getElementById('filterType');
+    const clearFiltersBtn = document.getElementById('clearFilters');
+    const filterResults = document.getElementById('filterResults');
+
+    let allKeysData = [];  // تخزين البيانات الأصلية
+    let debounceTimer;  // للبحث
+
+    // توليد مفتاح (غير)
     function generateKey() {
       const prefix = 'TABIBI-';
       const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -322,14 +487,14 @@
       return prefix + formattedRandom;  // مثل: TABIBI-ABCD-EFGH-IJKL-MN
     }
 
-    // التحقق من عدم تكرار المفتاح (مع التنسيق المجزأ)
+    // التحقق من عدم تكرار المفتاح (غير)
     async function isKeyUnique(key) {
       const keyRef = ref(db, `keys/${key}`);
       const snapshot = await get(keyRef);
       return !snapshot.exists();
     }
 
-    // توليد keys فريدة
+    // توليد keys فريدة (غير)
     async function generateUniqueKeys(count) {
       const keys = [];
       while (keys.length < count) {
@@ -341,7 +506,7 @@
       return keys;
     }
 
-    // حساب المدة (بالمللي ثانية)
+    // حساب المدة (غير)
     function getDuration(type) {
       const durations = {
         'minute': 1 * 60 * 1000,
@@ -353,11 +518,10 @@
       return durations[type] || 0;
     }
 
-    // تنسيق التاريخ الميلادي (gregorian) بالعربية
+    // تنسيق التاريخ (غير)
     function formatDate(timestamp) {
       if (!timestamp) return 'غير محدد';
       try {
-        // استخدم تقويم gregorian مع أرقام عربية إذا أمكن
         const date = new Date(timestamp);
         const options = { 
           year: 'numeric', 
@@ -367,20 +531,18 @@
           minute: '2-digit',
           calendar: 'gregorian'  // ميلادي
         };
-        // 'ar-SA-u-ca-gregorian' للميلادي، أو fallback
-        return date.toLocaleDateString('ar-SA-u-ca-gregorian', options) || date.toLocaleDateString('en-US', options).replace(/Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec/, ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'][new Date(timestamp).getMonth()]);
+        return date.toLocaleDateString('ar-SA-u-ca-gregorian', options) || date.toLocaleDateString('en-US', options).replace(/Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec/g, m => ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'][['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'].indexOf(m)]);
       } catch (e) {
         return new Date(timestamp).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
       }
     }
 
-    // نسخ إلى clipboard
+    // نسخ إلى clipboard (غير)
     async function copyToClipboard(text) {
       try {
         await navigator.clipboard.writeText(text);
         return true;
       } catch (err) {
-        // Fallback للمتصفحات القديمة
         const textArea = document.createElement('textarea');
         textArea.value = text;
         document.body.appendChild(textArea);
@@ -391,7 +553,68 @@
       }
     }
 
-    // عرض الإحصائيات والجدول مع زر النسخ (المفتاح مجزأ)
+    // تطبيق الفلاتر (غير، مع debounce للهواتف)
+    function applyFilters(keysArray) {
+      let filtered = [...keysArray];
+
+      const searchTerm = filterSearch.value.trim().toUpperCase();
+      if (searchTerm) {
+        filtered = filtered.filter(item => item.key.toUpperCase().includes(searchTerm));
+      }
+
+      const statusFilter = filterStatus.value;
+      if (statusFilter) {
+        filtered = filtered.filter(item => {
+          const isActivated = item.activated;
+          const isExpired = isActivated && item.expirationTime && item.expirationTime <= Date.now();
+          if (statusFilter === 'inactive' && !isActivated) return true;
+          if (statusFilter === 'active' && isActivated && !isExpired) return true;
+          if (statusFilter === 'expired' && isExpired) return true;
+          return false;
+        });
+      }
+
+      const typeFilter = filterType.value;
+      if (typeFilter) {
+        filtered = filtered.filter(item => item.subscriptionType === typeFilter);
+      }
+
+      return filtered;
+    }
+
+    // تحديث الجدول (غير، عرض الجميع مع scroll)
+    function renderTable(filteredKeys) {
+      keysTableBody.innerHTML = '';
+      if (filteredKeys.length === 0) {
+        noResultsDiv.style.display = 'block';
+        return;
+      }
+      noResultsDiv.style.display = 'none';
+
+      filteredKeys.forEach(({ key, subscriptionType, maxDevices, currentDevices = 0, generatedTime, activationTime, expirationTime, activated }) => {
+        const isExpired = activated && expirationTime && expirationTime <= Date.now();
+        const statusClass = activated ? (isExpired ? 'expired' : 'activated') : '';
+        const statusText = activated ? (isExpired ? 'منتهي' : 'مفعل') : 'غير مفعل';
+        const devicesText = `${currentDevices || 0}/${maxDevices || 1}`;
+
+        const copyBtnHtml = `<button class="copy-btn" onclick="copyToClipboard('${key}'); this.innerHTML='<i class=\'fas fa-check\'></i> تم النسخ!'; setTimeout(() => this.innerHTML='<i class=\'fas fa-copy\'></i> نسخ', 2000);"><i class="fas fa-copy"></i> نسخ</button>`;
+
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td style="font-family: monospace; direction: ltr;">${key}</td>
+          <td>${subscriptionType}</td>
+          <td>${devicesText}</td>
+          <td>${formatDate(generatedTime)}</td>
+          <td>${formatDate(activationTime)}</td>
+          <td>${formatDate(expirationTime)}</td>
+          <td class="${statusClass}">${statusText}</td>
+          <td>${copyBtnHtml}</td>
+        `;
+        keysTableBody.appendChild(row);
+      });
+    }
+
+    // عرض الإحصائيات (تحديث مع عرض الجميع)
     async function updateStats() {
       statsLoading.style.display = 'inline-block';
       try {
@@ -399,15 +622,20 @@
         const snapshot = await get(keysRef);
         if (!snapshot.exists()) {
           statsGrid.innerHTML = '<p>لا توجد مفاتيح.</p>';
+          keysTableBody.innerHTML = '';
+          filterResults.textContent = '';
           return;
         }
 
         const allKeys = snapshot.val();
-        const keysArray = Object.entries(allKeys).map(([key, data]) => ({ key, ...data }));
+        allKeysData = Object.entries(allKeys).map(([key, data]) => ({ key, ...data }));
 
-        const totalGenerated = keysArray.length;
-        const activated = keysArray.filter(k => k.activated).length;
-        const expired = keysArray.filter(k => k.activated && k.expirationTime && k.expirationTime <= Date.now()).length;
+        // ترتيب تنازلي حسب تاريخ التوليد (أحدث أولاً)
+        allKeysData.sort((a, b) => (b.generatedTime || 0) - (a.generatedTime || 0));
+
+        const totalGenerated = allKeysData.length;
+        const activated = allKeysData.filter(k => k.activated).length;
+        const expired = allKeysData.filter(k => k.activated && k.expirationTime && k.expirationTime <= Date.now()).length;
 
         // تحديث الإحصائيات
         statsGrid.innerHTML = `
@@ -425,40 +653,22 @@
           </div>
         `;
 
-        // تحديث الجدول (آخر 20 مفتاحًا) مع زر نسخ
-        keysTableBody.innerHTML = '';
-        keysArray.slice(-20).reverse().forEach(({ key, subscriptionType, maxDevices, currentDevices = 0, generatedTime, activationTime, expirationTime, activated }) => {
-          const isExpired = activated && expirationTime && expirationTime <= Date.now();
-          const statusClass = activated ? (isExpired ? 'expired' : 'activated') : '';
-          const statusText = activated ? (isExpired ? 'منتهي' : 'مفعل') : 'غير مفعل';
-          const devicesText = `${currentDevices || 0}/${maxDevices || 1}`;
-
-          const copyBtn = `<button class="copy-btn" onclick="copyToClipboard('${key}'); this.textContent='تم النسخ!'; setTimeout(() => this.textContent='نسخ', 2000);"><i class="fas fa-copy"></i> نسخ</button>`;
-
-          const row = `
-            <tr>
-              <td>${key}</td>
-              <td>${subscriptionType}</td>
-              <td>${devicesText}</td>
-              <td>${formatDate(generatedTime)}</td>
-              <td>${formatDate(activationTime)}</td>
-              <td>${formatDate(expirationTime)}</td>
-              <td class="${statusClass}">${statusText}</td>
-              <td>${copyBtn}</td>
-            </tr>
-          `;
-          keysTableBody.innerHTML += row;
-        });
+        // تطبيق الفلتر وتحديث الجدول
+        const filteredKeys = applyFilters(allKeysData);
+        renderTable(filteredKeys);
+        filterResults.textContent = `يتم عرض ${filteredKeys.length} من ${totalGenerated} مفتاح`;
 
       } catch (error) {
         console.error('خطأ في الإحصائيات:', error);
         statsGrid.innerHTML = '<p class="status-error">خطأ في تحميل الإحصائيات.</p>';
+        keysTableBody.innerHTML = '';
+        filterResults.textContent = '';
       } finally {
         statsLoading.style.display = 'none';
       }
     }
 
-    // معالج التوليد
+    // معالج التوليد (غير)
     generateForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       const numKeys = parseInt(numKeysInput.value);
@@ -497,7 +707,7 @@
         generatedKeysDiv.style.display = 'block';
         showStatus(`تم توليد ${numKeys} مفتاح بنجاح! (نوع: ${subscriptionType}, أجهزة: ${maxDevices})`, 'success');
 
-        // تحديث الإحصائيات فورًا
+        // تحديث الإحصائيات فورًا (مع تطبيق الفلتر الحالي)
         await updateStats();
 
       } catch (error) {
@@ -509,13 +719,31 @@
       }
     });
 
-    // عرض الرسائل
+    // معالجات الفلاتر (تلقائية، مع debounce)
+    function debounceFilter() {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => updateStats(), 300);
+    }
+
+    filterSearch.addEventListener('input', debounceFilter);
+    filterStatus.addEventListener('change', updateStats);
+    filterType.addEventListener('change', updateStats);
+
+    // مسح الفلاتر
+    clearFiltersBtn.addEventListener('click', () => {
+      filterSearch.value = '';
+      filterStatus.value = '';
+      filterType.value = '';
+      updateStats();
+    });
+
+    // عرض الرسائل (غير)
     function showStatus(message, type) {
       generateStatus.innerHTML = `<div class="status-message status-${type}">${message}</div>`;
       setTimeout(() => { generateStatus.innerHTML = ''; }, 5000);
     }
 
-    // تهيئة الصفحة
+    // تهيئة الصفحة (غير)
     document.addEventListener('DOMContentLoaded', () => {
       updateStats();  // تحميل أولي
       setInterval(updateStats, 5000);  // تحديث كل 5 ثوانٍ
@@ -523,7 +751,7 @@
   </script>
 
   <script>
-    // Dark/Light Mode Toggle
+    // Dark/Light Mode Toggle (غير)
     function applyTheme(theme) {
       document.documentElement.setAttribute('data-theme', theme);
       localStorage.setItem('theme', theme);
@@ -544,7 +772,7 @@
       applyTheme(newTheme);
     });
 
-    // منع الضغط المطول والسياق (مثل dashboard.html)
+    // منع الضغط المطول والسياق (غير)
     document.addEventListener('DOMContentLoaded', function() {
       const links = document.querySelectorAll('a');
       links.forEach(link => {
@@ -560,7 +788,7 @@
       });
     });
 
-    // جعل copyToClipboard متاحة عالميًا (للـ onclick في الجدول)
+    // جعل copyToClipboard متاحة عالميًا (غير)
     window.copyToClipboard = copyToClipboard;
   </script>
 
