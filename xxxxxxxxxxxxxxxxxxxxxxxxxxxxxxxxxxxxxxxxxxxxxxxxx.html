@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>لوحة الإدارة - توليد مفاتيح طبيبي</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap');
+
+    /* CSS Variables للـThemes (مشابه لـ dashboard.html) */
+    :root {
+      --bg-color: #f5f7fa;
+      --card-bg: #ffffff;
+      --text-color: #333;
+      --secondary-text: #666;
+      --border-color: #d1d5db;
+      --primary-blue: #1e88e5;
+      --button-bg: #1e88e5;
+      --button-hover: #1565c0;
+      --secondary-button-bg: #f1f1f1;
+      --secondary-button-hover: #ddd;
+      --success-green: #4caf50;
+      --warning-orange: #ff9800;
+      --error-red: #f44336;
+      --shadow-light: rgba(0,0,0,0.05);
+      --icon-color: #1e88e5;
+    }
+
+    [data-theme="dark"] {
+      --bg-color: #121212;
+      --card-bg: #1e1e1e;
+      --text-color: #e0e0e0;
+      --secondary-text: #b0b0b0;
+      --border-color: #4b5563;
+      --primary-blue: #0d47a1;
+      --button-bg: #0d47a1;
+      --button-hover: #1565c0;
+      --secondary-button-bg: #2a2a2a;
+      --secondary-button-hover: #3a3a3a;
+      --success-green: #388e3c;
+      --warning-orange: #ff8f00;
+      --error-red: #ef5350;
+      --shadow-light: rgba(255,255,255,0.05);
+      --icon-color: #90caf9;
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Tajawal', sans-serif;
+      background: var(--bg-color);
+      color: var(--text-color);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      transition: background-color 0.3s, color 0.3s;
+    }
+
+    /* منع تحديد النص */
+    * { user-select: none; -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; }
+    input, textarea, select, button { user-select: text; -webkit-user-select: text; -moz-user-select: text; -ms-user-select: text; }
+
+    header {
+      background: var(--primary-blue);
+      color: #fff;
+      padding: 15px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 2px 8px var(--shadow-light);
+    }
+
+    header h1 {
+      font-size: 24px;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* زر الثيم */
+    #themeToggle {
+      background: var(--secondary-button-bg);
+      color: var(--text-color);
+      border: none;
+      padding: 8px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background 0.3s;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    #themeToggle:hover { background: var(--secondary-button-hover); }
+
+    main {
+      flex: 1;
+      padding: 20px;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .card {
+      background: var(--card-bg);
+      padding: 20px;
+      margin: 20px 0;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px var(--shadow-light);
+      transition: background-color 0.3s;
+    }
+
+    .card h2 { margin-top: 0; color: var(--primary-blue); }
+
+    .card input, .card select {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      margin: 10px 0;
+      font-family: inherit;
+      background: var(--card-bg);
+      color: var(--text-color);
+    }
+
+    .card input:focus, .card select:focus { outline: none; border-color: var(--primary-blue); }
+
+    .btn {
+      display: block;
+      width: 100%;
+      margin: 10px 0;
+      padding: 12px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: bold;
+      transition: background-color 0.3s;
+    }
+
+    .btn-primary { background: var(--button-bg); color: #fff; }
+    .btn-primary:hover { background: var(--button-hover); }
+    .btn-primary:disabled { background: var(--secondary-button-bg); cursor: not-allowed; color: var(--secondary-text); }
+
+    .btn-success { background: var(--success-green); color: #fff; }
+    .btn-success:hover { background: #388e3c; }
+
+    /* زر النسخ في الجدول */
+    .copy-btn {
+      background: var(--success-green);
+      color: #fff;
+      border: none;
+      padding: 5px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+      transition: background 0.3s;
+    }
+
+    .copy-btn:hover { background: #388e3c; }
+    .copy-btn:active { transform: scale(0.98); }
+
+    .status-message {
+      padding: 10px;
+      border-radius: 8px;
+      margin: 10px 0;
+      font-weight: bold;
+      text-align: center;
+    }
+
+    .status-success { background: rgba(76, 175, 80, 0.1); color: var(--success-green); border: 1px solid var(--success-green); }
+    .status-error { background: rgba(244, 67, 54, 0.1); color: var(--error-red); border: 1px solid var(--error-red); }
+
+    /* إحصائيات */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 15px;
+      margin: 20px 0;
+    }
+
+    .stat-card {
+      background: var(--card-bg);
+      padding: 15px;
+      border-radius: 8px;
+      text-align: center;
+      box-shadow: 0 2px 4px var(--shadow-light);
+    }
+
+    .stat-number { font-size: 24px; font-weight: bold; color: var(--primary-blue); }
+    .stat-label { font-size: 14px; color: var(--secondary-text); }
+
+    /* جدول المفاتيح */
+    table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+    th, td { padding: 10px; text-align: right; border-bottom: 1px solid var(--border-color); }
+    th { background: var(--secondary-button-bg); color: var(--text-color); }
+    .expired { color: var(--error-red); }
+    .activated { color: var(--success-green); }
+
+    /* Loading */
+    .loading { display: inline-block; width: 20px; height: 20px; border: 3px solid var(--border-color); border-radius: 50%; border-top-color: var(--primary-blue); animation: spin 1s infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Responsive */
+    @media (max-width: 768px) { 
+      main { padding: 10px; } 
+      table { font-size: 12px; }
+      header { flex-direction: column; gap: 10px; }
+      #themeToggle { width: 100%; justify-content: center; }
+    }
+
+    /* Dark Mode تحسينات */
+    [data-theme="dark"] input, [data-theme="dark"] select { background: var(--card-bg); color: var(--text-color); border-color: var(--border-color); }
+    [data-theme="dark"] table th { background: var(--secondary-button-bg); }
+    [data-theme="dark"] .copy-btn { background: var(--success-green); }
+  </style>
+</head>
+<body data-theme="light">
+
+  <header>
+    <h1><i class="fas fa-cogs"></i> لوحة الإدارة - طبيبي</h1>
+    <button id="themeToggle">
+      <i class="fas fa-moon"></i> وضع الليل
+    </button>
+  </header>
+
+  <main>
+    <div class="card">
+      <h2><i class="fas fa-key"></i> توليد مفاتيح اشتراك جديدة</h2>
+      <form id="generateForm">
+        <label>عدد المفاتيح:</label>
+        <input type="number" id="numKeys" min="1" max="1000" value="10" required>
+
+        <label>نوع الاشتراك:</label>
+        <select id="subscriptionType" required>
+          <option value="minute">دقيقة (للاختبار)</option>
+          <option value="month" selected>شهر واحد</option>
+          <option value="2months">شهرين</option>
+          <option value="year">سنة واحدة</option>
+          <option value="2years">سنتين</option>
+        </select>
+
+        <label>عدد الأجهزة المسموحة لكل مفتاح:</label>
+        <input type="number" id="maxDevices" min="1" max="10" value="1" required>
+
+        <button type="submit" class="btn btn-primary" id="generateBtn">
+          <i class="fas fa-magic"></i> توليد المفاتيح
+        </button>
+      </form>
+      <div id="generateStatus"></div>
+      <div id="generatedKeys" style="margin-top: 20px; display: none;">
+        <h3>المفاتيح المولدة:</h3>
+        <textarea readonly style="width: 100%; height: 150px; padding: 10px; border: 1px solid var(--border-color); border-radius: 8px; font-family: monospace; direction: ltr; text-align: left;"></textarea>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2><i class="fas fa-chart-bar"></i> إحصائيات المفاتيح</h2>
+      <div class="stats-grid" id="statsGrid">
+        <!-- سيتم ملؤها ديناميكيًا -->
+      </div>
+      <div class="loading" id="statsLoading"></div>
+      <table id="keysTable">
+        <thead>
+          <tr><th>المفتاح</th><th>نوع</th><th>أجهزة حالية/الحد الأقصى</th><th>تاريخ التوليد</th><th>تاريخ التفعيل</th><th>انتهاء</th><th>حالة</th><th>إجراءات</th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </main>
+
+  <footer style="text-align: center; padding: 15px; background: var(--primary-blue); color: #fff;">© جميع الحقوق محفوظة لـ Kasp-ai</footer>
+
+  <!-- Firebase SDK -->
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+    import { getDatabase, ref, get, set, update } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
+
+    const config = {
+      apiKey: "AIzaSyCx1or21FNaXKzcMcoVTtjvoGVtHSbBdy0",
+      authDomain: "tabibisy-subkey.firebaseapp.com",
+      databaseURL: "https://tabibisy-subkey-default-rtdb.firebaseio.com",
+      projectId: "tabibisy-subkey",
+      storageBucket: "tabibisy-subkey.firebasestorage.app",
+      messagingSenderId: "1037739463574",
+      appId: "1:1037739463574:web:13dba634bd0738304ec3b7"
+    };
+
+    const app = initializeApp(config);
+    const db = getDatabase(app);
+
+    // عناصر DOM
+    const generateForm = document.getElementById('generateForm');
+    const numKeysInput = document.getElementById('numKeys');
+    const subscriptionTypeSelect = document.getElementById('subscriptionType');
+    const maxDevicesInput = document.getElementById('maxDevices');
+    const generateBtn = document.getElementById('generateBtn');
+    const generateStatus = document.getElementById('generateStatus');
+    const generatedKeysDiv = document.getElementById('generatedKeys');
+    const keysTextarea = generatedKeysDiv.querySelector('textarea');
+    const statsGrid = document.getElementById('statsGrid');
+    const statsLoading = document.getElementById('statsLoading');
+    const keysTableBody = document.querySelector('#keysTable tbody');
+
+    // توليد مفتاح: TABIBI- + 14 حرف عشوائي مجزأ بـ "-" (4-4-4-2)
+    function generateKey() {
+      const prefix = 'TABIBI-';
+      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+      let random = '';
+      for (let i = 0; i < 14; i++) {  // 14 خانة عشوائية
+        random += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      // مجزأة الـ14 خانة بـ "-" : 4-4-4-2
+      const formattedRandom = [
+        random.substring(0, 4),
+        random.substring(4, 8),
+        random.substring(8, 12),
+        random.substring(12, 14)
+      ].join('-');
+      return prefix + formattedRandom;  // مثل: TABIBI-ABCD-EFGH-IJKL-MN
+    }
+
+    // التحقق من عدم تكرار المفتاح (مع التنسيق المجزأ)
+    async function isKeyUnique(key) {
+      const keyRef = ref(db, `keys/${key}`);
+      const snapshot = await get(keyRef);
+      return !snapshot.exists();
+    }
+
+    // توليد keys فريدة
+    async function generateUniqueKeys(count) {
+      const keys = [];
+      while (keys.length < count) {
+        const key = generateKey();
+        if (await isKeyUnique(key)) {
+          keys.push(key);
+        }
+      }
+      return keys;
+    }
+
+    // حساب المدة (بالمللي ثانية)
+    function getDuration(type) {
+      const durations = {
+        'minute': 1 * 60 * 1000,
+        'month': 30 * 24 * 60 * 60 * 1000,
+        '2months': 60 * 24 * 60 * 60 * 1000,
+        'year': 365 * 24 * 60 * 60 * 1000,
+        '2years': 730 * 24 * 60 * 60 * 1000
+      };
+      return durations[type] || 0;
+    }
+
+    // تنسيق التاريخ الميلادي (gregorian) بالعربية
+    function formatDate(timestamp) {
+      if (!timestamp) return 'غير محدد';
+      try {
+        // استخدم تقويم gregorian مع أرقام عربية إذا أمكن
+        const date = new Date(timestamp);
+        const options = { 
+          year: 'numeric', 
+          month: 'long', 
+          day: 'numeric', 
+          hour: '2-digit', 
+          minute: '2-digit',
+          calendar: 'gregorian'  // ميلادي
+        };
+        // 'ar-SA-u-ca-gregorian' للميلادي، أو fallback
+        return date.toLocaleDateString('ar-SA-u-ca-gregorian', options) || date.toLocaleDateString('en-US', options).replace(/Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec/, ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'][new Date(timestamp).getMonth()]);
+      } catch (e) {
+        return new Date(timestamp).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+      }
+    }
+
+    // نسخ إلى clipboard
+    async function copyToClipboard(text) {
+      try {
+        await navigator.clipboard.writeText(text);
+        return true;
+      } catch (err) {
+        // Fallback للمتصفحات القديمة
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        return true;
+      }
+    }
+
+    // عرض الإحصائيات والجدول مع زر النسخ (المفتاح مجزأ)
+    async function updateStats() {
+      statsLoading.style.display = 'inline-block';
+      try {
+        const keysRef = ref(db, 'keys');
+        const snapshot = await get(keysRef);
+        if (!snapshot.exists()) {
+          statsGrid.innerHTML = '<p>لا توجد مفاتيح.</p>';
+          return;
+        }
+
+        const allKeys = snapshot.val();
+        const keysArray = Object.entries(allKeys).map(([key, data]) => ({ key, ...data }));
+
+        const totalGenerated = keysArray.length;
+        const activated = keysArray.filter(k => k.activated).length;
+        const expired = keysArray.filter(k => k.activated && k.expirationTime && k.expirationTime <= Date.now()).length;
+
+        // تحديث الإحصائيات
+        statsGrid.innerHTML = `
+          <div class="stat-card">
+            <div class="stat-number">${totalGenerated}</div>
+            <div class="stat-label">مولدة</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number">${activated}</div>
+            <div class="stat-label">مفعلة</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number">${expired}</div>
+            <div class="stat-label">منتهية</div>
+          </div>
+        `;
+
+        // تحديث الجدول (آخر 20 مفتاحًا) مع زر نسخ
+        keysTableBody.innerHTML = '';
+        keysArray.slice(-20).reverse().forEach(({ key, subscriptionType, maxDevices, currentDevices = 0, generatedTime, activationTime, expirationTime, activated }) => {
+          const isExpired = activated && expirationTime && expirationTime <= Date.now();
+          const statusClass = activated ? (isExpired ? 'expired' : 'activated') : '';
+          const statusText = activated ? (isExpired ? 'منتهي' : 'مفعل') : 'غير مفعل';
+          const devicesText = `${currentDevices || 0}/${maxDevices || 1}`;
+
+          const copyBtn = `<button class="copy-btn" onclick="copyToClipboard('${key}'); this.textContent='تم النسخ!'; setTimeout(() => this.textContent='نسخ', 2000);"><i class="fas fa-copy"></i> نسخ</button>`;
+
+          const row = `
+            <tr>
+              <td>${key}</td>
+              <td>${subscriptionType}</td>
+              <td>${devicesText}</td>
+              <td>${formatDate(generatedTime)}</td>
+              <td>${formatDate(activationTime)}</td>
+              <td>${formatDate(expirationTime)}</td>
+              <td class="${statusClass}">${statusText}</td>
+              <td>${copyBtn}</td>
+            </tr>
+          `;
+          keysTableBody.innerHTML += row;
+        });
+
+      } catch (error) {
+        console.error('خطأ في الإحصائيات:', error);
+        statsGrid.innerHTML = '<p class="status-error">خطأ في تحميل الإحصائيات.</p>';
+      } finally {
+        statsLoading.style.display = 'none';
+      }
+    }
+
+    // معالج التوليد
+    generateForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const numKeys = parseInt(numKeysInput.value);
+      const subscriptionType = subscriptionTypeSelect.value;
+      const maxDevices = parseInt(maxDevicesInput.value);
+      const duration = getDuration(subscriptionType);
+
+      if (numKeys > 1000) {
+        showStatus('الحد الأقصى 1000 مفتاح.', 'error');
+        return;
+      }
+
+      generateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري التوليد...';
+      generateBtn.disabled = true;
+
+      try {
+        const keys = await generateUniqueKeys(numKeys);
+        const generatedData = [];
+
+        for (const key of keys) {
+          const keyRef = ref(db, `keys/${key}`);
+          await set(keyRef, {
+            subscriptionType,
+            maxDevices,
+            currentDevices: 0,
+            deviceIds: [],
+            generatedTime: Date.now(),
+            activated: false,
+            activationTime: null,
+            expirationTime: null  // يُحسب عند أول تفعيل
+          });
+          generatedData.push(key);
+        }
+
+        keysTextarea.value = generatedData.join('\n');
+        generatedKeysDiv.style.display = 'block';
+        showStatus(`تم توليد ${numKeys} مفتاح بنجاح! (نوع: ${subscriptionType}, أجهزة: ${maxDevices})`, 'success');
+
+        // تحديث الإحصائيات فورًا
+        await updateStats();
+
+      } catch (error) {
+        console.error('خطأ في التوليد:', error);
+        showStatus('خطأ: ' + error.message, 'error');
+      } finally {
+        generateBtn.innerHTML = '<i class="fas fa-magic"></i> توليد المفاتيح';
+        generateBtn.disabled = false;
+      }
+    });
+
+    // عرض الرسائل
+    function showStatus(message, type) {
+      generateStatus.innerHTML = `<div class="status-message status-${type}">${message}</div>`;
+      setTimeout(() => { generateStatus.innerHTML = ''; }, 5000);
+    }
+
+    // تهيئة الصفحة
+    document.addEventListener('DOMContentLoaded', () => {
+      updateStats();  // تحميل أولي
+      setInterval(updateStats, 5000);  // تحديث كل 5 ثوانٍ
+    });
+  </script>
+
+  <script>
+    // Dark/Light Mode Toggle
+    function applyTheme(theme) {
+      document.documentElement.setAttribute('data-theme', theme);
+      localStorage.setItem('theme', theme);
+      const toggleBtn = document.getElementById('themeToggle');
+      const icon = toggleBtn.querySelector('i');
+      const text = theme === 'dark' ? 'وضع النهار' : 'وضع الليل';
+      icon.className = theme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+      toggleBtn.innerHTML = `${icon.outerHTML} ${text}`;
+    }
+
+    const themeToggle = document.getElementById('themeToggle');
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    applyTheme(savedTheme);
+
+    themeToggle.addEventListener('click', () => {
+      const currentTheme = document.documentElement.getAttribute('data-theme');
+      const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+      applyTheme(newTheme);
+    });
+
+    // منع الضغط المطول والسياق (مثل dashboard.html)
+    document.addEventListener('DOMContentLoaded', function() {
+      const links = document.querySelectorAll('a');
+      links.forEach(link => {
+        link.addEventListener('contextmenu', e => e.preventDefault());
+        let longPressTimer;
+        link.addEventListener('touchstart', e => {
+          if (e.touches.length > 0) {
+            longPressTimer = setTimeout(() => e.preventDefault(), 500);
+          }
+        });
+        link.addEventListener('touchend', () => clearTimeout(longPressTimer));
+        link.addEventListener('touchmove', () => clearTimeout(longPressTimer));
+      });
+    });
+
+    // جعل copyToClipboard متاحة عالميًا (للـ onclick في الجدول)
+    window.copyToClipboard = copyToClipboard;
+  </script>
+
+</body>
+</html>
